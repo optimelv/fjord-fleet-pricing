@@ -64,4 +64,4 @@ Model 5 adds a further $2.7 million in expected contribution versus Model 4b whi
 
 ## Project Context
 
-This project was completed as part of OPM 582: Case Studies in Operations Management at the University of Mannheim, FSS 2026, in collaboration with BCG Platinion. The case is "Fleet Sales Pricing at Fjord Motor" by Columbia CaseWorks.
+This project was completed as a university analytics project at the University of Mannheim in FSS 2026, based on the "Fleet Sales Pricing at Fjord Motor" case by Columbia CaseWorks.
