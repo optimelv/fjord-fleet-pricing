@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Fjord Motor Fleet - Simulation Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-fixed-variant": "#284a63",
+                        "inverse-primary": "#a6c9f7",
+                        "primary-fixed-dim": "#a6c9f7",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#7699c4",
+                        "on-secondary-fixed": "#001e30",
+                        "inverse-surface": "#2f3033",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "surface": "#faf9fd",
+                        "surface-container-high": "#e8e8eb",
+                        "on-tertiary-fixed": "#121f00",
+                        "surface-tint": "#3d6189",
+                        "on-primary-fixed-variant": "#234970",
+                        "on-secondary-container": "#41627d",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#dadadd",
+                        "outline": "#73777f",
+                        "on-surface": "#1a1c1e",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#ceed9c",
+                        "surface-container-low": "#f4f3f7",
+                        "secondary-fixed-dim": "#a9cae9",
+                        "on-tertiary-container": "#839f57",
+                        "tertiary-fixed-dim": "#b3d182",
+                        "surface-variant": "#e2e2e6",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f1f0f4",
+                        "secondary": "#41627c",
+                        "on-surface-variant": "#43474e",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#faf9fd",
+                        "primary-container": "#003056",
+                        "background": "#faf9fd",
+                        "tertiary": "#111d00",
+                        "surface-container-highest": "#e2e2e6",
+                        "secondary-container": "#bcdefd",
+                        "primary-fixed": "#d2e4ff",
+                        "on-error": "#ffffff",
+                        "on-background": "#1a1c1e",
+                        "tertiary-container": "#213400",
+                        "surface-container": "#eeedf1",
+                        "primary": "#001b34",
+                        "secondary-fixed": "#cbe6ff",
+                        "outline-variant": "#c3c6cf",
+                        "on-tertiary-fixed-variant": "#364e0e",
+                        "on-primary-fixed": "#001d37"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "0px"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+        * { border-radius: 0px !important; } /* Force architectural shapes */
+        #mainChart {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .cost-switch {
+            width: 42px;
+            height: 22px;
+            border: 1px solid #001b34;
+            background: #ffffff;
+            position: relative;
+            transition: background-color 180ms ease;
+        }
+        .cost-switch-thumb {
+            position: absolute;
+            left: 3px;
+            top: 3px;
+            width: 14px;
+            height: 14px;
+            background: #001b34;
+            transition: transform 180ms ease, background-color 180ms ease;
+        }
+        .cost-switch[aria-checked="true"] {
+            background: #001b34;
+        }
+        .cost-switch[aria-checked="true"] .cost-switch-thumb {
+            background: #ffffff;
+            transform: translateX(20px);
+        }
+        .brand-logo {
+            width: 92px;
+            height: 44px;
+            object-fit: contain;
+            display: block;
+        }
+        .nav-tab {
+            border-bottom: 2px solid transparent;
+            color: #43474e;
+            padding: 6px 8px;
+            white-space: nowrap;
+            transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
+        }
+        .nav-tab:hover {
+            color: #001b34;
+            background: #f4f3f7;
+        }
+        .nav-tab.is-active {
+            color: #001b34;
+            border-color: #001b34;
+        }
+        .mobile-nav {
+            scrollbar-width: thin;
+        }
+        .mobile-nav .nav-tab {
+            border: 1px solid #e2e2e6;
+            background: #ffffff;
+        }
+        .mobile-nav .nav-tab.is-active {
+            background: #001b34;
+            border-color: #001b34;
+            color: #ffffff;
+        }
+        .top-popover {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: min(320px, calc(100vw - 24px));
+            background: #ffffff;
+            border: 1px solid #e2e2e6;
+            z-index: 80;
+        }
+        .top-popover[hidden] {
+            display: none !important;
+        }
+        .segment-button {
+            background: #ffffff;
+            color: #43474e;
+        }
+        .segment-button.is-active {
+            color: #ffffff;
+        }
+        .segment-button.is-police-active {
+            background: #001b34;
+        }
+        .segment-button.is-corporate-active {
+            background: #41627c;
+        }
+        .model-option {
+            border-left: 3px solid transparent;
+            transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+        }
+        .model-option:hover,
+        .model-option:focus-visible {
+            background: #f4f3f7;
+            border-left-color: #41627c;
+            outline: none;
+        }
+        .model-option.is-selected {
+            background: #eeedf1;
+            border-left-color: #001b34;
+            color: #001b34;
+        }
+        #modelDropdownButton {
+            text-align: left;
+        }
+        .model-current {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            width: 100%;
+            min-width: 0;
+            text-align: left;
+        }
+        .model-current-name {
+            min-width: 0;
+            line-height: 1;
+        }
+        .model-recommended-badge {
+            display: inline-flex;
+            align-items: center;
+            align-self: center;
+            min-height: 18px;
+            line-height: 1;
+            transform: translateY(-0.5px);
+        }
+        .model-recommended-badge[hidden] {
+            display: none !important;
+        }
+        .view-panel[hidden] {
+            display: none !important;
+        }
+        @media (max-width: 767px) {
+            .chart-frame { min-height: 340px; }
+            .brand-logo {
+                width: 76px;
+                height: 36px;
+            }
+        }
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 8mm;
+            }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            html,
+            body {
+                width: 100% !important;
+                height: auto !important;
+                min-height: 0 !important;
+                overflow: visible !important;
+                background: #faf9fd !important;
+            }
+            header {
+                position: static !important;
+                min-height: 52px !important;
+                padding: 4px 12px !important;
+            }
+            nav,
+            header button,
+            .top-popover,
+            #resetButton,
+            #exportButton,
+            #modelView,
+            #briefView {
+                display: none !important;
+            }
+            #appShell {
+                display: flex !important;
+                flex-direction: row !important;
+                min-height: 0 !important;
+            }
+            aside {
+                width: 220px !important;
+                height: auto !important;
+                overflow: visible !important;
+                padding: 14px !important;
+                border-right: 1px solid #e2e2e6 !important;
+                border-bottom: 0 !important;
+            }
+            main {
+                padding: 14px !important;
+                overflow: visible !important;
+            }
+            #dashboardView {
+                display: flex !important;
+                gap: 12px !important;
+            }
+            #dashboardView > .grid {
+                display: grid !important;
+                grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+                gap: 10px !important;
+            }
+            #dashboardView > .flex {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 12px !important;
+            }
+            .chart-frame {
+                min-height: 310px !important;
+                height: 310px !important;
+            }
+            #mainChart {
+                height: 310px !important;
+            }
+            .xl\:w-80 {
+                width: 260px !important;
+            }
+        }
+    </style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-background text-on-background min-h-screen xl:h-screen w-full overflow-x-hidden xl:overflow-hidden text-sm flex flex-col selection:bg-primary selection:text-on-primary">
+<!-- TopNavBar -->
+<header class="sticky top-0 left-0 w-full z-50 flex flex-wrap justify-between items-center gap-4 px-4 md:px-8 xl:px-12 min-h-16 md:min-h-20 bg-surface-container-lowest border-b border-surface-container-highest font-headline font-bold text-sm tracking-tight text-on-surface">
+<div class="flex items-center gap-4 xl:gap-10 min-w-0">
+<div class="flex items-center gap-3 min-w-0">
+<img alt="Fjord Motor" class="brand-logo" src="fjord-logo-nav.png"/>
+<div class="hidden sm:block">
+<div class="text-xs font-bold uppercase tracking-[0.18em] text-primary whitespace-nowrap">Fleet Pricing</div>
+<div class="text-[11px] font-light text-outline whitespace-nowrap">Coronet Elizabeth</div>
+</div>
+</div>
+<nav class="hidden md:flex gap-4 xl:gap-6 h-full items-end pb-3" aria-label="Primary">
+<button class="nav-tab is-active text-sm font-bold" data-view="dashboard" type="button">Simulation Dashboard</button>
+<button class="nav-tab text-sm font-bold" data-view="model" type="button">Model Notes</button>
+<button class="nav-tab text-sm font-bold" data-view="brief" type="button">Executive Brief</button>
+</nav>
+</div>
+<div class="relative flex items-center gap-3 md:gap-6 shrink-0" id="topActions">
+<button aria-controls="notificationsPanel" aria-expanded="false" aria-haspopup="dialog" aria-label="Notifications" class="text-on-surface-variant hover:text-primary transition-colors relative" id="notificationsButton" type="button">
+<span class="material-symbols-outlined text-2xl">notifications</span>
+<span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#839f57] border border-surface-container-lowest"></span>
+</button>
+<button aria-controls="accountPanel" aria-expanded="false" aria-haspopup="dialog" aria-label="Account" class="text-on-surface-variant hover:text-primary transition-colors" id="accountButton" type="button">
+<span class="material-symbols-outlined text-2xl">account_circle</span>
+</button>
+<div class="top-popover p-4" id="notificationsPanel" hidden>
+<div class="flex items-center justify-between border-b border-surface-variant pb-3 mb-3">
+<div class="text-xs font-bold uppercase tracking-widest text-primary">Notifications</div>
+<div class="text-[10px] font-bold uppercase tracking-widest text-outline">3 New</div>
+</div>
+<div class="flex flex-col gap-3">
+<div class="border-l-2 border-l-secondary pl-3">
+<div class="text-sm font-bold text-primary">Recommended model updated</div>
+<div class="text-xs font-light text-on-surface-variant leading-relaxed">Model 5 is now the default scenario for the current pricing review.</div>
+</div>
+<div class="border-l-2 border-l-[#839f57] pl-3">
+<div class="text-sm font-bold text-primary">Volume guidance ready</div>
+<div class="text-xs font-light text-on-surface-variant leading-relaxed">Order-size recommendations are recalculated for each model and segment.</div>
+</div>
+<div class="border-l-2 border-l-outline pl-3">
+<div class="text-sm font-bold text-primary">Export prepared</div>
+<div class="text-xs font-light text-on-surface-variant leading-relaxed">PDF export uses the current dashboard state and print-optimized layout.</div>
+</div>
+</div>
+</div>
+<div class="top-popover p-4" id="accountPanel" hidden>
+<div class="border-b border-surface-variant pb-3 mb-3">
+<div class="text-sm font-bold text-primary">Fjord Fleet Analyst</div>
+<div class="text-xs font-light text-outline">pricing@fjord.example</div>
+</div>
+<div class="flex flex-col">
+<button class="text-left px-2 py-2 text-xs font-bold uppercase tracking-wider text-on-surface-variant hover:bg-surface-container-low hover:text-primary" type="button">Account Settings</button>
+<button class="text-left px-2 py-2 text-xs font-bold uppercase tracking-wider text-on-surface-variant hover:bg-surface-container-low hover:text-primary" type="button">Export History</button>
+<button class="text-left px-2 py-2 text-xs font-bold uppercase tracking-wider text-on-surface-variant hover:bg-surface-container-low hover:text-primary" type="button">Help</button>
+<button class="text-left px-2 py-2 text-xs font-bold uppercase tracking-wider text-error hover:bg-error-container" type="button">Log Out</button>
+</div>
+</div>
+</div>
+<nav class="mobile-nav flex md:hidden order-3 basis-full gap-2 overflow-x-auto border-t border-surface-variant pt-2 pb-3" aria-label="Primary mobile">
+<button class="nav-tab is-active text-xs font-bold" data-view="dashboard" type="button">Simulation Dashboard</button>
+<button class="nav-tab text-xs font-bold" data-view="model" type="button">Model Notes</button>
+<button class="nav-tab text-xs font-bold" data-view="brief" type="button">Executive Brief</button>
+</nav>
+</header>
+<!-- SideNavBar & Main Content Grid -->
+<div class="flex flex-col lg:flex-row w-full flex-1 min-h-0" id="appShell">
+<!-- SideNavBar -->
+<aside class="w-full lg:w-72 lg:h-full lg:overflow-y-auto flex flex-col p-4 md:p-6 bg-surface-container-low border-b lg:border-b-0 lg:border-r border-surface-container-highest shrink-0 font-light text-sm text-on-surface transition-all duration-200 ease-in-out">
+<div class="mb-8">
+<h2 class="text-sm font-bold uppercase tracking-widest text-on-surface-variant mb-1">Simulation Controls</h2>
+<p class="text-xs text-outline font-light">Pricing Review Mode</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6 lg:gap-6">
+<!-- Customer Type -->
+<div class="flex flex-col gap-3">
+<div class="flex items-center gap-2 text-primary font-bold">
+<span class="material-symbols-outlined text-sm">person_search</span>
+                        Customer Type
+                    </div>
+<div class="flex border border-surface-container-highest bg-surface-container-lowest w-full" role="group" aria-label="Customer type">
+<button class="customer-type-btn segment-button is-active is-police-active flex-1 py-2 text-center text-xs font-bold transition-colors" data-customer="police" type="button">Police</button>
+<button class="customer-type-btn segment-button flex-1 py-2 text-center text-xs font-bold transition-colors hover:bg-surface-container-highest" data-customer="corporate" type="button">Corporate</button>
+</div>
+</div>
+<!-- Model Selection -->
+<div class="flex flex-col gap-3">
+<div class="flex items-center gap-2 text-primary font-bold">
+<span class="material-symbols-outlined text-sm">directions_car</span>
+                        Model Selection
+                    </div>
+<div class="relative" id="modelDropdown">
+<button aria-controls="modelMenu" aria-expanded="false" aria-haspopup="listbox" class="w-full px-3 py-2.5 border border-surface-container-highest bg-surface-container-lowest text-on-surface text-xs font-bold uppercase tracking-wider focus:ring-0 focus:border-primary flex items-center justify-between gap-3" id="modelDropdownButton" type="button">
+<span class="model-current gap-2" id="modelDropdownLabel">
+<span class="model-current-name truncate" id="modelDropdownName">Model 5</span>
+<span class="model-recommended-badge text-[10px] font-bold uppercase tracking-widest bg-secondary-container text-primary px-2 py-1 shrink-0" id="modelDropdownBadge">Recommended</span>
+</span>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant transition-transform" id="modelDropdownIcon">keyboard_arrow_down</span>
+</button>
+<div class="hidden absolute z-40 w-full mt-1 bg-surface-container-lowest border border-surface-container-highest shadow-none" id="modelMenu" role="listbox" tabindex="-1">
+<button class="model-option w-full text-left px-3 py-3 text-xs font-bold uppercase tracking-wider flex items-start justify-between gap-3" data-model="3" role="option" type="button">
+<span><span class="block text-on-surface">Model 3</span><span class="block mt-1 text-[10px] font-light normal-case tracking-normal text-outline">Simple segment and order-size response</span></span>
+</button>
+<button class="model-option w-full text-left px-3 py-3 text-xs font-bold uppercase tracking-wider flex items-start gap-3" data-model="4b" role="option" type="button">
+<span class="min-w-0"><span class="flex items-center justify-start gap-2 text-on-surface text-left"><span class="leading-none">Model 4b</span></span><span class="block mt-1 text-[10px] font-light normal-case tracking-normal text-outline">Main report model</span></span>
+</button>
+<button class="model-option is-selected w-full text-left px-3 py-3 text-xs font-bold uppercase tracking-wider flex items-start gap-3" data-model="5b" role="option" type="button">
+<span class="min-w-0"><span class="flex items-center justify-start gap-2 text-on-surface text-left"><span class="leading-none">Model 5</span><span class="model-recommended-badge text-[10px] font-bold uppercase tracking-widest bg-secondary-container text-primary px-2 py-1 shrink-0">Recommended</span></span><span class="block mt-1 text-[10px] font-light normal-case tracking-normal text-outline">Best fit</span></span>
+</button>
+</div>
+</div>
+</div>
+<!-- Order Size -->
+<div class="flex flex-col gap-3">
+<div class="flex items-center gap-2 text-primary font-bold">
+<span class="material-symbols-outlined text-sm">analytics</span>
+                        Order Size
+                    </div>
+<input class="w-full bg-surface-container-lowest border border-surface-container-highest py-2 px-3 text-sm focus:border-primary focus:ring-0 focus:outline-none transition-colors" id="orderSizeInput" inputmode="numeric" max="60" min="10" step="1" type="number" value="20"/>
+</div>
+<!-- Global Constants (Cost Toggle) -->
+<div class="flex flex-col gap-3">
+<div class="flex items-center gap-2 text-primary font-bold">
+<span class="material-symbols-outlined text-sm">settings_input_component</span>
+                        Global Constants
+                    </div>
+<div class="flex items-center justify-between gap-4">
+<span class="text-xs font-bold text-on-surface-variant">Police Cost Adjustment</span>
+<button aria-checked="false" aria-label="Police Cost Adjustment" class="cost-switch shrink-0" id="policeCostToggle" role="switch" type="button">
+<span class="cost-switch-thumb" aria-hidden="true"></span>
+</button>
+</div>
+</div>
+</div>
+<div class="mt-6 lg:mt-auto flex flex-col gap-4">
+<div class="flex flex-wrap justify-between gap-4 text-xs text-on-surface-variant mt-2">
+<button class="flex items-center gap-1 hover:text-primary transition-colors font-bold uppercase tracking-wider" id="resetButton" type="button">
+<span class="material-symbols-outlined text-[14px]">restart_alt</span> Reset View
+                    </button>
+<button class="flex items-center gap-1 hover:text-primary transition-colors font-bold uppercase tracking-wider" id="exportButton" type="button">
+<span class="material-symbols-outlined text-[14px]">ios_share</span> Export PDF
+                    </button>
+</div>
+</div>
+</aside>
+<!-- Main Dashboard Canvas (16:9 Optimized) -->
+<main class="flex-1 p-4 md:p-6 bg-background flex flex-col gap-6 min-w-0 min-h-0 xl:overflow-hidden">
+<section class="view-panel flex flex-col gap-6 flex-1 min-h-0" id="dashboardView" data-view-panel="dashboard">
+<!-- KPI Row -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 shrink-0">
+<div class="bg-surface-container-lowest border border-surface-container-highest p-4 md:p-5 min-h-28 flex flex-col justify-between">
+<div class="text-xs font-bold uppercase tracking-widest text-outline">Optimal Price</div>
+<div class="text-2xl md:text-3xl font-bold text-primary break-words" id="optimalPriceKpi">$17,774</div>
+</div>
+<div class="bg-surface-container-lowest border border-surface-container-highest p-4 md:p-5 min-h-28 flex flex-col justify-between">
+<div class="text-xs font-bold uppercase tracking-widest text-outline">Win Probability</div>
+<div class="text-2xl md:text-3xl font-bold text-primary break-words" id="winProbabilityKpi">52.7%</div>
+</div>
+<div class="bg-surface-container-lowest border border-surface-container-highest p-4 md:p-5 min-h-28 flex flex-col justify-between">
+<div class="text-xs font-bold uppercase tracking-widest text-outline">Expected Contribution / Vehicle</div>
+<div class="text-2xl md:text-3xl font-bold text-primary break-words" id="expectedContributionKpi">$1,463</div>
+</div>
+<div class="bg-surface-container-lowest border border-surface-container-highest p-4 md:p-5 min-h-28 flex flex-col justify-between">
+<div class="text-xs font-bold uppercase tracking-widest text-outline">Total Expected Contribution</div>
+<div class="text-2xl md:text-3xl font-bold text-primary break-words" id="totalExpectedContributionKpi">$29,255</div>
+</div>
+</div>
+<!-- Lower Row: Chart & Insight -->
+<div class="flex flex-col xl:flex-row gap-6 flex-1 min-h-0">
+<!-- Main Chart Area -->
+<div class="flex-1 bg-surface-container-lowest border border-surface-container-highest p-4 md:p-6 flex flex-col relative min-h-[420px] xl:min-h-0 min-w-0">
+<div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-6">
+<div>
+<h3 class="text-lg font-bold text-primary">Contribution Margin vs Win Probability</h3>
+<p class="text-xs text-outline mt-1 font-light" id="chartSubtitle">Model 5 | Police Configuration | s=20</p>
+</div>
+<div class="flex flex-wrap gap-4">
+<div class="flex items-center gap-2">
+<div class="w-4 h-1 bg-[#001b34]"></div>
+<span class="text-xs font-light text-on-surface-variant">Contribution ($)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-4 h-[2px] bg-secondary border-t border-dashed border-secondary"></div>
+<span class="text-xs font-light text-on-surface-variant">Win Prob (%)</span>
+</div>
+</div>
+</div>
+<!-- Canvas Chart Container -->
+<div class="chart-frame flex-1 w-full relative mt-2 min-h-[280px] xl:min-h-0">
+<canvas id="mainChart"></canvas>
+</div>
+</div>
+<!-- Executive Insight Panel -->
+<div class="w-full xl:w-80 bg-surface border-t-4 border-t-[#001b34] border border-surface-container-highest p-4 md:p-6 flex flex-col shrink-0 relative">
+<h3 class="text-sm font-bold uppercase tracking-widest text-primary mb-4 border-b border-surface-variant pb-2">Executive Insight</h3>
+<div class="flex-1 flex flex-col gap-4">
+<p class="text-sm font-light text-on-surface-variant leading-relaxed" id="executiveInsight">
+                            For a police order of 20 vehicles, Model 5 recommends a unit price of $17,774, capturing a 52.7% win probability while maximising expected contribution of $1,463 per vehicle.
+                        </p>
+<div class="bg-surface-container-low border border-surface-container-highest border-l-2 border-l-secondary px-3 py-3" id="recommendationMetric">
+<div class="text-[10px] font-bold uppercase tracking-widest text-outline mb-1">Bid Posture</div>
+<div class="text-sm font-bold text-primary" id="recommendationMetricValue">Balanced conversion</div>
+</div>
+<div class="bg-surface-container-low border border-surface-container-highest border-l-2 border-l-[#839f57] px-3 py-3" id="volumeMetric">
+<div class="text-[10px] font-bold uppercase tracking-widest text-outline mb-1">Volume Guidance</div>
+<div class="text-sm font-light leading-relaxed text-on-surface-variant" id="volumeMetricValue">If volume is negotiable, compare nearby order sizes before concessioning price.</div>
+</div>
+<div class="mt-auto flex flex-col gap-2 pt-4 border-t border-surface-variant">
+<span class="text-[10px] font-bold uppercase tracking-widest text-outline mb-1">Key Drivers</span>
+<div class="bg-surface-container-low border border-surface-container-highest px-3 py-2">
+<span class="text-xs font-bold text-primary">Price sensitivity</span>
+</div>
+<div class="bg-surface-container-low border border-surface-container-highest px-3 py-2">
+<span class="text-xs font-bold text-primary">Order size effect</span>
+</div>
+<div class="bg-surface-container-low border border-surface-container-highest px-3 py-2">
+<span class="text-xs font-bold text-primary">Segment difference</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="view-panel flex flex-col gap-6 flex-1 min-h-0" id="modelView" data-view-panel="model" hidden>
+<div class="bg-surface-container-lowest border border-surface-container-highest p-6 md:p-8">
+<div class="text-xs font-bold uppercase tracking-widest text-outline mb-3">Model Notes</div>
+<h1 class="text-2xl font-bold text-primary mb-4">Pricing Model Reference</h1>
+<p class="text-sm font-light text-on-surface-variant leading-relaxed max-w-3xl">This dashboard estimates expected contribution by combining the unit margin with a logistic win-probability model. Model 5 is the recommended default, while Model 4b remains the main report model.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+<div class="bg-surface-container-lowest border border-surface-container-highest p-5">
+<div class="text-xs font-bold uppercase tracking-widest text-outline mb-2">Inputs</div>
+<p class="text-sm font-light text-on-surface-variant leading-relaxed">Customer segment, model family, order size, and the police cost adjustment flow directly into the optimizer.</p>
+</div>
+<div class="bg-surface-container-lowest border border-surface-container-highest p-5">
+<div class="text-xs font-bold uppercase tracking-widest text-outline mb-2">Optimizer</div>
+<p class="text-sm font-light text-on-surface-variant leading-relaxed">Golden-section search scans the feasible price interval from cost to MSRP and returns the rounded unit price with maximum expected contribution.</p>
+</div>
+<div class="bg-surface-container-lowest border border-surface-container-highest p-5">
+<div class="text-xs font-bold uppercase tracking-widest text-outline mb-2">Output</div>
+<p class="text-sm font-light text-on-surface-variant leading-relaxed">KPIs, chart curves, optimal markers, and the executive sentence are all recalculated from the same model state.</p>
+</div>
+</div>
+</section>
+<section class="view-panel flex flex-col gap-6 flex-1 min-h-0" id="briefView" data-view-panel="brief" hidden>
+<div class="bg-surface-container-lowest border border-surface-container-highest p-6 md:p-8">
+<div class="text-xs font-bold uppercase tracking-widest text-outline mb-3">Executive Brief</div>
+<h1 class="text-2xl font-bold text-primary mb-4">Pricing Review Summary</h1>
+<p class="text-sm font-light text-on-surface-variant leading-relaxed max-w-3xl">Use the simulation dashboard as the live source of truth during pricing review. The recommended price balances win probability and contribution, while the segment toggle highlights how police and corporate buyers respond differently to price and order size.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+<div class="bg-surface-container-lowest border border-surface-container-highest p-5">
+<div class="text-xs font-bold uppercase tracking-widest text-outline mb-2">Decision Frame</div>
+<p class="text-sm font-light text-on-surface-variant leading-relaxed">Quote within the $15,000-$25,000 feasible range and use the optimal marker as the initial negotiation anchor.</p>
+</div>
+<div class="bg-surface-container-lowest border border-surface-container-highest p-5">
+<div class="text-xs font-bold uppercase tracking-widest text-outline mb-2">Watch Item</div>
+<p class="text-sm font-light text-on-surface-variant leading-relaxed">When win probability is high, avoid unnecessary discounts; when it is low, review whether strategic account value justifies deviation.</p>
+</div>
+</div>
+</section>
+</main>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('mainChart').getContext('2d');
+    const MSRP = 25000;
+    const BASE_COST = 15000;
+    const POLICE_ADJUSTED_COST = 16000;
+    const MODELS = {
+        '3': {
+            police: { a: -14.969352220176299, b: 20.232504266752201, c: 0.029796759371037901, f: 0 },
+            corporate: { a: -28.887167901252798, b: 29.3098579414625, c: 0.029796759371037901, f: 0 }
+        },
+        '4b': {
+            police: { a: -17.626255, b: 23.853577999999999, c: 0.164412, f: -0.18417 },
+            corporate: { a: -31.269024000000002, b: 32.619275000000002, c: 0.164412, f: -0.18417 }
+        }
+    };
+    const MODEL5B = {
+        police: { aP: -2.7204940470518002, bP: -17.0897633659932, gP: 27.9020982113569, c: 0.15810511462299101, f: -0.17612945357387799 },
+        corporate: { aC: -31.150835104394599, bC: 32.468663102321102, c: 0.15810511462299101, f: -0.17612945357387799 }
+    };
+    const MODEL_SHORT_LABELS = {
+        '3': 'Model 3',
+        '4b': 'Model 4b',
+        '5b': 'Model 5'
+    };
+    const state = {
+        customer: 'police',
+        model: '5b',
+        policeCostAdjustment: false,
+        view: 'dashboard'
+    };
+
+    const navTabs = document.querySelectorAll('.nav-tab');
+    const viewPanels = document.querySelectorAll('[data-view-panel]');
+    const notificationsButton = document.getElementById('notificationsButton');
+    const notificationsPanel = document.getElementById('notificationsPanel');
+    const accountButton = document.getElementById('accountButton');
+    const accountPanel = document.getElementById('accountPanel');
+    const customerButtons = document.querySelectorAll('.customer-type-btn');
+    const modelDropdownButton = document.getElementById('modelDropdownButton');
+    const modelDropdownIcon = document.getElementById('modelDropdownIcon');
+    const modelDropdownLabel = document.getElementById('modelDropdownLabel');
+    const modelDropdownName = document.getElementById('modelDropdownName');
+    const modelDropdownBadge = document.getElementById('modelDropdownBadge');
+    const modelMenu = document.getElementById('modelMenu');
+    const modelOptions = document.querySelectorAll('.model-option');
+    const orderSizeInput = document.getElementById('orderSizeInput');
+    const policeCostToggle = document.getElementById('policeCostToggle');
+    const resetButton = document.getElementById('resetButton');
+    const exportButton = document.getElementById('exportButton');
+    const optimalPriceKpi = document.getElementById('optimalPriceKpi');
+    const winProbabilityKpi = document.getElementById('winProbabilityKpi');
+    const expectedContributionKpi = document.getElementById('expectedContributionKpi');
+    const totalExpectedContributionKpi = document.getElementById('totalExpectedContributionKpi');
+    const chartSubtitle = document.getElementById('chartSubtitle');
+    const executiveInsight = document.getElementById('executiveInsight');
+    const recommendationMetricValue = document.getElementById('recommendationMetricValue');
+    const volumeMetricValue = document.getElementById('volumeMetricValue');
+
+    function winProb(pm, price, s) {
+        const p = price / MSRP;
+        return 1 / (1 + Math.exp(pm.a + pm.b * p + pm.c * s + pm.f * p * s));
+    }
+
+    function winProb5b(segment, price, s) {
+        const p = price / MSRP;
+        if (segment === 'police') {
+            const pm = MODEL5B.police;
+            return 1 / (1 + Math.exp(pm.aP + pm.bP * p + pm.gP * p * p + pm.c * s + pm.f * p * s));
+        }
+        const pm = MODEL5B.corporate;
+        return 1 / (1 + Math.exp(pm.aC + pm.bC * p + pm.c * s + pm.f * p * s));
+    }
+
+    function expContrib(pm, price, s, cost) {
+        return winProb(pm, price, s) * (price - cost);
+    }
+
+    function goldenSearch(pm, s, cost) {
+        const gr = (Math.sqrt(5) - 1) / 2;
+        let lo = cost, hi = MSRP;
+        let x1 = hi - gr * (hi - lo), x2 = lo + gr * (hi - lo);
+        for (let i = 0; i < 200; i++) {
+            const f1 = expContrib(pm, x1, s, cost);
+            const f2 = expContrib(pm, x2, s, cost);
+            if (f1 > f2) {
+                hi = x2;
+                x2 = x1;
+                x1 = hi - gr * (hi - lo);
+            } else {
+                lo = x1;
+                x1 = x2;
+                x2 = lo + gr * (hi - lo);
+            }
+            if (hi - lo < 0.01) break;
+        }
+        return Math.round((lo + hi) / 2);
+    }
+
+    function goldenSearch5b(segment, s, cost) {
+        const gr = (Math.sqrt(5) - 1) / 2;
+        let lo = cost, hi = MSRP;
+        let x1 = hi - gr * (hi - lo), x2 = lo + gr * (hi - lo);
+        for (let i = 0; i < 200; i++) {
+            const f1 = winProb5b(segment, x1, s) * (x1 - cost);
+            const f2 = winProb5b(segment, x2, s) * (x2 - cost);
+            if (f1 > f2) {
+                hi = x2;
+                x2 = x1;
+                x1 = hi - gr * (hi - lo);
+            } else {
+                lo = x1;
+                x1 = x2;
+                x2 = lo + gr * (hi - lo);
+            }
+            if (hi - lo < 0.01) break;
+        }
+        return Math.round((lo + hi) / 2);
+    }
+
+    function getWinProbability(model, segment, price, s) {
+        if (model === '5b') return winProb5b(segment, price, s);
+        return winProb(MODELS[model][segment], price, s);
+    }
+
+    function getExpectedContribution(model, segment, price, s, cost) {
+        return getWinProbability(model, segment, price, s) * (price - cost);
+    }
+
+    function getOptimalPrice(model, segment, s, cost) {
+        if (model === '5b') return goldenSearch5b(segment, s, cost);
+        return goldenSearch(MODELS[model][segment], s, cost);
+    }
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            maximumFractionDigits: 0
+        }).format(value);
+    }
+
+    function formatPercent(value) {
+        return `${(value * 100).toFixed(1)}%`;
+    }
+
+    function getBidPosture(probability) {
+        if (probability >= 0.75) return 'Hold price discipline';
+        if (probability >= 0.45) return 'Balanced conversion';
+        return 'Selective pursuit';
+    }
+
+    function getVolumeGuidance(model, segment, cost, currentSize, modelLabel) {
+        let bestSize = 10;
+        let bestPrice = cost;
+        let bestTotal = -Infinity;
+        const currentPrice = getOptimalPrice(model, segment, currentSize, cost);
+        const currentTotal = getExpectedContribution(model, segment, currentPrice, currentSize, cost) * currentSize;
+        for (let size = 10; size <= 60; size++) {
+            const price = getOptimalPrice(model, segment, size, cost);
+            const total = getExpectedContribution(model, segment, price, size, cost) * size;
+            if (total > bestTotal) {
+                bestTotal = total;
+                bestSize = size;
+                bestPrice = price;
+            }
+        }
+        if (bestSize === currentSize) {
+            return `${modelLabel} scan: current ${currentSize}-vehicle order is the strongest volume point, with ${formatCurrency(bestTotal)} expected total contribution.`;
+        }
+        const lift = bestTotal - currentTotal;
+        const direction = bestSize > currentSize ? 'larger' : 'smaller';
+        return `${modelLabel} scan: steer toward ${bestSize} vehicles at ${formatCurrency(bestPrice)} if volume is negotiable; this ${direction} order adds ${formatCurrency(lift)} vs. the current size.`;
+    }
+
+    function resetHoverTrail() {
+        hoverTrail = [];
+        if (hoverAnimationFrame) {
+            cancelAnimationFrame(hoverAnimationFrame);
+            hoverAnimationFrame = null;
+        }
+    }
+
+    function clearChartInteraction() {
+        resetHoverTrail();
+        if (mainChart) {
+            mainChart.setActiveElements([]);
+            mainChart.tooltip.setActiveElements([], { x: 0, y: 0 });
+            mainChart.update('none');
+        }
+    }
+
+    function setPopover(openPanel) {
+        const notificationsOpen = openPanel === notificationsPanel;
+        const accountOpen = openPanel === accountPanel;
+        notificationsPanel.hidden = !notificationsOpen;
+        accountPanel.hidden = !accountOpen;
+        notificationsButton.setAttribute('aria-expanded', String(notificationsOpen));
+        accountButton.setAttribute('aria-expanded', String(accountOpen));
+    }
+
+    function closeModelMenu() {
+        modelMenu.classList.add('hidden');
+        modelDropdownButton.setAttribute('aria-expanded', 'false');
+        modelDropdownIcon.style.transform = 'rotate(0deg)';
+    }
+
+    function openModelMenu() {
+        modelMenu.classList.remove('hidden');
+        modelDropdownButton.setAttribute('aria-expanded', 'true');
+        modelDropdownIcon.style.transform = 'rotate(180deg)';
+    }
+
+    function getSelectedModelIndex() {
+        return Array.from(modelOptions).findIndex((option) => option.dataset.model === state.model);
+    }
+
+    function focusModelOption(index) {
+        const boundedIndex = (index + modelOptions.length) % modelOptions.length;
+        modelOptions[boundedIndex].focus();
+    }
+
+    function selectModel(model) {
+        state.model = model;
+        closeModelMenu();
+        updateDashboard();
+        modelDropdownButton.focus();
+    }
+
+    function getOrderSize() {
+        const parsed = Math.round(Number(orderSizeInput.value));
+        if (!Number.isFinite(parsed)) return 10;
+        return Math.min(60, Math.max(10, parsed));
+    }
+
+    function getCost() {
+        return state.customer === 'police' && state.policeCostAdjustment ? POLICE_ADJUSTED_COST : BASE_COST;
+    }
+
+    function buildChartData(model, segment, s, cost) {
+        const contributions = [];
+        const probabilities = [];
+        for (let price = BASE_COST; price <= MSRP; price += 100) {
+            contributions.push({ x: price, y: getExpectedContribution(model, segment, price, s, cost) });
+            probabilities.push({ x: price, y: getWinProbability(model, segment, price, s) * 100 });
+        }
+        return { contributions, probabilities };
+    }
+
+    function getNiceStep(rawStep) {
+        const safeStep = Math.max(rawStep, 1);
+        const magnitude = Math.pow(10, Math.floor(Math.log10(safeStep)));
+        const normalized = safeStep / magnitude;
+        let niceNormalized;
+        if (normalized <= 1.2) niceNormalized = 1;
+        else if (normalized <= 2) niceNormalized = 2;
+        else if (normalized <= 2.5) niceNormalized = 2.5;
+        else if (normalized <= 5) niceNormalized = 5;
+        else niceNormalized = 10;
+        return niceNormalized * magnitude;
+    }
+
+    function getNiceAxisBounds(values) {
+        const rawMin = Math.min(...values, 0);
+        const rawMax = Math.max(...values, 1);
+        const paddedMin = rawMin < 0 ? rawMin * 1.08 : 0;
+        const paddedMax = rawMax * 1.12;
+        const step = getNiceStep((paddedMax - paddedMin) / 5);
+        return {
+            min: Math.floor(paddedMin / step) * step,
+            max: Math.ceil(paddedMax / step) * step,
+            step
+        };
+    }
+
+    let hoverTrail = [];
+    let hoverAnimationFrame = null;
+    let mainChart;
+
+    function drawDiamond(ctx, x, y, size, fill, stroke) {
+        ctx.beginPath();
+        ctx.moveTo(x, y - size);
+        ctx.lineTo(x + size, y);
+        ctx.lineTo(x, y + size);
+        ctx.lineTo(x - size, y);
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
+    function scheduleTrailAnimation() {
+        if (hoverAnimationFrame) return;
+        const step = () => {
+            const now = performance.now();
+            hoverTrail = hoverTrail.filter((point) => now - point.time < 360);
+            if (mainChart && hoverTrail.length) {
+                mainChart.draw();
+                hoverAnimationFrame = requestAnimationFrame(step);
+            } else {
+                hoverAnimationFrame = null;
+            }
+        };
+        hoverAnimationFrame = requestAnimationFrame(step);
+    }
+
+    const optimalLinePlugin = {
+        id: 'optimalLine',
+        afterDraw(chart, args, pluginOptions) {
+            const price = pluginOptions.price;
+            if (!price) return;
+            const { ctx, chartArea, scales } = chart;
+            const x = scales.x.getPixelForValue(price);
+            if (x < chartArea.left || x > chartArea.right) return;
+
+            ctx.save();
+            ctx.setLineDash([6, 5]);
+            ctx.strokeStyle = '#001b34';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x, chartArea.top);
+            ctx.lineTo(x, chartArea.bottom);
+            ctx.stroke();
+
+            ctx.setLineDash([]);
+            ctx.font = '700 12px Inter, sans-serif';
+            ctx.textBaseline = 'top';
+            const labelX = x > chartArea.right - 150 ? x - 142 : x + 12;
+            const labelY = chartArea.top + 10;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(labelX - 4, labelY - 3, 136, 38);
+            ctx.fillStyle = '#001b34';
+            ctx.fillText('Optimum', labelX, labelY);
+            ctx.fillText(formatCurrency(price), labelX, labelY + 18);
+
+            if (pluginOptions.optContribution != null && pluginOptions.optProbability != null) {
+                const yContribution = scales.y.getPixelForValue(pluginOptions.optContribution);
+                const yProbability = scales.y1.getPixelForValue(pluginOptions.optProbability * 100);
+                drawDiamond(ctx, x, yContribution, 7, '#ffffff', '#001b34');
+                ctx.fillStyle = '#ffffff';
+                ctx.strokeStyle = '#41627c';
+                ctx.lineWidth = 2;
+                ctx.fillRect(x - 5, yProbability - 5, 10, 10);
+                ctx.strokeRect(x - 5, yProbability - 5, 10, 10);
+            }
+
+            const now = performance.now();
+            hoverTrail.forEach((trailPoint) => {
+                const age = now - trailPoint.time;
+                const alpha = Math.pow(Math.max(0, 1 - age / 360), 2);
+                [
+                    { y: trailPoint.contributionY, color: '#001b34', radius: 7 },
+                    { y: trailPoint.probabilityY, color: '#41627c', radius: 5 }
+                ].forEach((point) => {
+                    ctx.beginPath();
+                    ctx.arc(trailPoint.x, point.y, point.radius * (0.7 + alpha * 0.5), 0, Math.PI * 2);
+                    ctx.globalAlpha = 0.28 * alpha;
+                    ctx.strokeStyle = point.color;
+                    ctx.lineWidth = Math.max(0.7, 1.6 * alpha);
+                    ctx.stroke();
+                });
+                ctx.globalAlpha = 1;
+            });
+
+            const active = chart.getActiveElements();
+            if (active.length) {
+                const activeIndex = (active.find((item) => item.datasetIndex === 0) || active[0]).index;
+                const contributionElement = chart.getDatasetMeta(0).data[activeIndex];
+                const probabilityElement = chart.getDatasetMeta(1).data[activeIndex];
+                if (!contributionElement || !probabilityElement) {
+                    ctx.restore();
+                    return;
+                }
+                const contributionData = chart.data.datasets[0].data[activeIndex];
+                const probabilityData = chart.data.datasets[1].data[activeIndex];
+
+                ctx.setLineDash([3, 4]);
+                ctx.strokeStyle = '#c3c6cf';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(contributionElement.x, chartArea.top);
+                ctx.lineTo(contributionElement.x, chartArea.bottom);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                [
+                    { element: contributionElement, stroke: '#001b34', radius: 5 },
+                    { element: probabilityElement, stroke: '#41627c', radius: 4 }
+                ].forEach((point) => {
+                    ctx.beginPath();
+                    ctx.arc(point.element.x, point.element.y, point.radius, 0, Math.PI * 2);
+                    ctx.shadowColor = point.stroke;
+                    ctx.shadowBlur = 7;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    ctx.strokeStyle = point.stroke;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                });
+
+                const lines = [
+                    formatCurrency(contributionData.x),
+                    `Contribution ${formatCurrency(contributionData.y)}`,
+                    `Win probability ${probabilityData.y.toFixed(1)}%`
+                ];
+                const boxWidth = 178;
+                const boxHeight = 74;
+                let boxX = contributionElement.x + 14;
+                let boxY = contributionElement.y - boxHeight - 12;
+                if (boxX + boxWidth > chartArea.right) boxX = contributionElement.x - boxWidth - 14;
+                if (boxY < chartArea.top) boxY = contributionElement.y + 16;
+                if (boxY + boxHeight > chartArea.bottom) boxY = chartArea.bottom - boxHeight - 6;
+
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowColor = 'rgba(0, 27, 52, 0.18)';
+                ctx.shadowBlur = 18;
+                ctx.shadowOffsetY = 8;
+                ctx.strokeStyle = '#001b34';
+                ctx.lineWidth = 1;
+                ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+                ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+                ctx.fillStyle = '#001b34';
+                ctx.font = '700 12px Inter, sans-serif';
+                ctx.fillText(lines[0], boxX + 10, boxY + 10);
+                ctx.font = '300 12px Inter, sans-serif';
+                ctx.fillStyle = '#43474e';
+                ctx.fillText(lines[1], boxX + 10, boxY + 32);
+                ctx.fillText(lines[2], boxX + 10, boxY + 52);
+            }
+            ctx.restore();
+        }
+    };
+
+    Chart.register(optimalLinePlugin);
+
+    mainChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: 'Expected Contribution',
+                    data: [],
+                    borderColor: '#001b34', // primary navy
+                    borderWidth: 4,
+                    yAxisID: 'y',
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
+                    pointHitRadius: 12,
+                    pointBorderWidth: 0,
+                    pointBackgroundColor: 'transparent',
+                    tension: 0.4
+                },
+                {
+                    label: 'Win Probability',
+                    data: [],
+                    borderColor: '#41627c', // secondary blue
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    yAxisID: 'y1',
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
+                    pointHitRadius: 12,
+                    pointBorderWidth: 0,
+                    pointBackgroundColor: 'transparent',
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            resizeDelay: 120,
+            animation: {
+                duration: 650,
+                easing: 'easeOutQuart'
+            },
+            transitions: {
+                active: {
+                    animation: {
+                        duration: 650,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            },
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            layout: {
+                padding: {
+                    top: 10,
+                    right: 8,
+                    bottom: 2,
+                    left: 10
+                }
+            },
+            onHover: function(event, activeElements, chart) {
+                if (!activeElements.length) return;
+                const activeIndex = (activeElements.find((item) => item.datasetIndex === 0) || activeElements[0]).index;
+                const contributionElement = chart.getDatasetMeta(0).data[activeIndex];
+                const probabilityElement = chart.getDatasetMeta(1).data[activeIndex];
+                if (!contributionElement || !probabilityElement) return;
+                const last = hoverTrail[hoverTrail.length - 1];
+                if (!last || Math.abs(last.x - contributionElement.x) > 2) {
+                    hoverTrail.push({
+                        x: contributionElement.x,
+                        contributionY: contributionElement.y,
+                        probabilityY: probabilityElement.y,
+                        time: performance.now()
+                    });
+                    hoverTrail = hoverTrail.slice(-8);
+                    scheduleTrailAnimation();
+                }
+            },
+            elements: {
+                point: {
+                    radius: 0,
+                    hoverRadius: 0,
+                    hitRadius: 12,
+                    borderWidth: 0
+                },
+                line: {
+                    borderCapStyle: 'round',
+                    borderJoinStyle: 'round'
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                optimalLine: {
+                    price: 17774,
+                    optContribution: 1463,
+                    optProbability: 0.527
+                },
+                tooltip: {
+                    enabled: false,
+                    callbacks: {
+                        title: function(context) {
+                            return formatCurrency(context[0].parsed.x);
+                        },
+                        label: function(context) {
+                            if (context.dataset.yAxisID === 'y1') {
+                                return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
+                            }
+                            return `${context.dataset.label}: ${formatCurrency(context.parsed.y)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'linear',
+                    min: BASE_COST,
+                    max: MSRP,
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        stepSize: 2000,
+                        padding: 8,
+                        callback: function(value) {
+                            return `$${(value / 1000).toFixed(0)}k`;
+                        },
+                        maxRotation: 0,
+                        color: '#73777f',
+                        font: {
+                            size: 10,
+                            family: 'Inter',
+                            weight: 300
+                        }
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    min: 0,
+                    max: 2500,
+                    grid: {
+                        color: '#e2e2e6'
+                    },
+                    ticks: {
+                        stepSize: 500,
+                        padding: 10,
+                        callback: function(value) {
+                            return formatCurrency(value);
+                        },
+                        color: '#73777f',
+                        font: {
+                            size: 10,
+                            family: 'Inter',
+                            weight: 300
+                        }
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    min: 0,
+                    max: 100,
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        stepSize: 20,
+                        padding: 8,
+                        callback: function(value) {
+                            return value + '%';
+                        },
+                        color: '#73777f',
+                        font: {
+                            size: 10,
+                            family: 'Inter',
+                            weight: 300
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    function syncControls() {
+        navTabs.forEach((tab) => {
+            const isActive = tab.dataset.view === state.view;
+            tab.classList.toggle('is-active', isActive);
+            tab.setAttribute('aria-current', isActive ? 'page' : 'false');
+        });
+        viewPanels.forEach((panel) => {
+            panel.hidden = panel.dataset.viewPanel !== state.view;
+        });
+
+        customerButtons.forEach((button) => {
+            const isActive = button.dataset.customer === state.customer;
+            button.classList.toggle('is-active', isActive);
+            button.classList.toggle('is-police-active', isActive && button.dataset.customer === 'police');
+            button.classList.toggle('is-corporate-active', isActive && button.dataset.customer === 'corporate');
+            button.classList.toggle('text-on-surface-variant', !isActive);
+            button.classList.toggle('hover:bg-surface-container-highest', !isActive);
+        });
+
+        modelDropdownName.textContent = MODEL_SHORT_LABELS[state.model];
+        modelDropdownBadge.hidden = state.model !== '5b';
+        modelOptions.forEach((option) => {
+            const isSelected = option.dataset.model === state.model;
+            option.classList.toggle('is-selected', isSelected);
+            option.setAttribute('aria-selected', String(isSelected));
+        });
+
+        const adjustmentEnabled = state.customer === 'police' && state.policeCostAdjustment;
+        policeCostToggle.disabled = state.customer !== 'police';
+        policeCostToggle.classList.toggle('opacity-40', state.customer !== 'police');
+        policeCostToggle.classList.toggle('cursor-not-allowed', state.customer !== 'police');
+        policeCostToggle.setAttribute('aria-checked', String(adjustmentEnabled));
+    }
+
+    function updateDashboard() {
+        const s = getOrderSize();
+        const cost = getCost();
+        const optimalPrice = getOptimalPrice(state.model, state.customer, s, cost);
+        const optimalWinProb = getWinProbability(state.model, state.customer, optimalPrice, s);
+        const optimalContribution = getExpectedContribution(state.model, state.customer, optimalPrice, s, cost);
+        const totalExpectedContribution = optimalContribution * s;
+        const chartData = buildChartData(state.model, state.customer, s, cost);
+        const customerLabel = state.customer;
+        const customerTitle = state.customer.charAt(0).toUpperCase() + state.customer.slice(1);
+        const modelLabel = MODEL_SHORT_LABELS[state.model];
+
+        optimalPriceKpi.textContent = formatCurrency(optimalPrice);
+        winProbabilityKpi.textContent = formatPercent(optimalWinProb);
+        expectedContributionKpi.textContent = formatCurrency(optimalContribution);
+        totalExpectedContributionKpi.textContent = formatCurrency(totalExpectedContribution);
+        chartSubtitle.textContent = `${modelLabel} | ${customerTitle} Configuration | s=${s}`;
+        executiveInsight.textContent = `For a ${customerLabel} order of ${s} vehicles, ${modelLabel} recommends a unit price of ${formatCurrency(optimalPrice)}, capturing a ${formatPercent(optimalWinProb)} win probability while maximising expected contribution of ${formatCurrency(optimalContribution)} per vehicle.`;
+        recommendationMetricValue.textContent = getBidPosture(optimalWinProb);
+        volumeMetricValue.textContent = getVolumeGuidance(state.model, state.customer, cost, s, modelLabel);
+        resetHoverTrail();
+        mainChart.setActiveElements([]);
+        mainChart.data.datasets[0].data = chartData.contributions;
+        mainChart.data.datasets[1].data = chartData.probabilities;
+        const contributionAxis = getNiceAxisBounds(chartData.contributions.map((point) => point.y));
+        mainChart.options.scales.y.min = contributionAxis.min;
+        mainChart.options.scales.y.max = contributionAxis.max;
+        mainChart.options.scales.y.ticks.stepSize = contributionAxis.step;
+        mainChart.options.plugins.optimalLine.price = optimalPrice;
+        mainChart.options.plugins.optimalLine.optContribution = optimalContribution;
+        mainChart.options.plugins.optimalLine.optProbability = optimalWinProb;
+        mainChart.update('active');
+        syncControls();
+    }
+
+    customerButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            state.customer = button.dataset.customer;
+            updateDashboard();
+        });
+    });
+
+    navTabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+            state.view = tab.dataset.view;
+            syncControls();
+            if (state.view === 'dashboard') {
+                requestAnimationFrame(() => mainChart.resize());
+            }
+        });
+    });
+
+    modelDropdownButton.addEventListener('click', () => {
+        const isOpen = !modelMenu.classList.contains('hidden');
+        setPopover(null);
+        if (isOpen) closeModelMenu();
+        else {
+            openModelMenu();
+            focusModelOption(Math.max(0, getSelectedModelIndex()));
+        }
+    });
+
+    modelDropdownButton.addEventListener('keydown', (event) => {
+        if (!['ArrowDown', 'Enter', ' '].includes(event.key)) return;
+        event.preventDefault();
+        setPopover(null);
+        openModelMenu();
+        focusModelOption(Math.max(0, getSelectedModelIndex()));
+    });
+
+    modelOptions.forEach((option) => {
+        option.addEventListener('click', () => {
+            selectModel(option.dataset.model);
+        });
+        option.addEventListener('keydown', (event) => {
+            const currentIndex = Array.from(modelOptions).indexOf(option);
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                focusModelOption(currentIndex + 1);
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                focusModelOption(currentIndex - 1);
+            } else if (event.key === 'Home') {
+                event.preventDefault();
+                focusModelOption(0);
+            } else if (event.key === 'End') {
+                event.preventDefault();
+                focusModelOption(modelOptions.length - 1);
+            } else if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                selectModel(option.dataset.model);
+            } else if (event.key === 'Escape') {
+                event.preventDefault();
+                closeModelMenu();
+                modelDropdownButton.focus();
+            }
+        });
+    });
+
+    notificationsButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        closeModelMenu();
+        setPopover(notificationsPanel.hidden ? notificationsPanel : null);
+    });
+
+    accountButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        closeModelMenu();
+        setPopover(accountPanel.hidden ? accountPanel : null);
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!document.getElementById('modelDropdown').contains(event.target)) {
+            closeModelMenu();
+        }
+        if (!document.getElementById('topActions').contains(event.target)) {
+            setPopover(null);
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeModelMenu();
+            setPopover(null);
+        }
+    });
+
+    orderSizeInput.addEventListener('input', updateDashboard);
+    orderSizeInput.addEventListener('change', () => {
+        orderSizeInput.value = getOrderSize();
+        updateDashboard();
+    });
+    policeCostToggle.addEventListener('click', () => {
+        if (state.customer !== 'police') return;
+        state.policeCostAdjustment = !state.policeCostAdjustment;
+        updateDashboard();
+    });
+    policeCostToggle.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        if (state.customer !== 'police') return;
+        state.policeCostAdjustment = !state.policeCostAdjustment;
+        updateDashboard();
+    });
+    resetButton.addEventListener('click', () => {
+        state.customer = 'police';
+        state.model = '5b';
+        state.policeCostAdjustment = false;
+        orderSizeInput.value = 20;
+        updateDashboard();
+    });
+    exportButton.addEventListener('click', () => {
+        state.view = 'dashboard';
+        syncControls();
+        clearChartInteraction();
+        exportButton.disabled = true;
+        exportButton.classList.add('opacity-60');
+        requestAnimationFrame(() => {
+            mainChart.resize();
+            mainChart.update('none');
+            window.print();
+            setTimeout(() => {
+                exportButton.disabled = false;
+                exportButton.classList.remove('opacity-60');
+            }, 600);
+        });
+    });
+    ctx.canvas.addEventListener('mouseleave', clearChartInteraction);
+    ctx.canvas.addEventListener('touchend', () => {
+        setTimeout(clearChartInteraction, 120);
+    }, { passive: true });
+
+    updateDashboard();
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => {
+            mainChart.resize();
+            mainChart.update('none');
+        });
+    }
+});
+</script>
+</body></html>
